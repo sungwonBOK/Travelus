@@ -4,10 +4,12 @@ import test from "node:test";
 import {
   applyPlaceSelection,
   createTripPlanStorage,
+  generateLooseRoutePlan,
   getRecommendedPlaces,
   getRouteEligibleSelections,
 } from "./services";
 import {
+  taipeiBundleCourses,
   taipeiPlaces,
   taipeiTrip,
   taipeiTripPlanSnapshot,
@@ -131,4 +133,87 @@ test("trip plan storage saves versioned snapshots behind a replaceable adapter",
   );
 
   assert.equal(storage.load(), null);
+});
+
+test("route generation prioritizes must-go selections and bundle courses deterministically", () => {
+  const request = {
+    trip: taipeiTrip,
+    places: taipeiPlaces,
+    bundleCourses: taipeiBundleCourses,
+    selections: taipeiUserSelections,
+    selectedBundleCourseIds: [
+      "yehliu-shifen-jiufen-day",
+      "taipei-night-market-food-route",
+    ],
+  };
+
+  const firstPlan = generateLooseRoutePlan(request);
+  const secondPlan = generateLooseRoutePlan(request);
+  const routeKeys = firstPlan.routeDraft.map(
+    (route) => route.courseId ?? route.placeId,
+  );
+
+  assert.deepEqual(firstPlan, secondPlan);
+  assert.deepEqual(routeKeys, [
+    "taipei-night-market-food-route",
+    "taipei-101-observatory",
+    "yehliu-shifen-jiufen-day",
+  ]);
+  assert.deepEqual(
+    firstPlan.routeDraft.map((route) => route.timeBlock),
+    ["evening", "sunset", "morning"],
+  );
+  assert.deepEqual(
+    firstPlan.routeDraft.map((route) => route.day),
+    [1, 2, 3],
+  );
+  assert.equal(
+    firstPlan.routeDraft.find(
+      (route) => route.placeId === "taipei-101-observatory",
+    )?.isLocked,
+    true,
+  );
+  assert.ok(
+    firstPlan.routeDraft.every((route) => route.difficultyScore >= 1),
+  );
+  assert.ok(
+    firstPlan.routeDraft.every(
+      (route) => route.travelTimeToNextMinutes >= 0,
+    ),
+  );
+});
+
+test("route generation omits excluded places and keeps interested places as map candidates", () => {
+  const plan = generateLooseRoutePlan({
+    trip: taipeiTrip,
+    places: taipeiPlaces,
+    bundleCourses: taipeiBundleCourses,
+    selections: [
+      ...taipeiUserSelections,
+      {
+        selectionId: "selection-exclude-jiufen",
+        tripId: taipeiTrip.tripId,
+        placeId: "jiufen-old-street",
+        selectionType: "excluded",
+        priority: 5,
+      },
+    ],
+    selectedBundleCourseIds: ["yehliu-shifen-jiufen-day"],
+  });
+  const routeKeys = plan.routeDraft.map(
+    (route) => route.courseId ?? route.placeId,
+  );
+  const candidateIds = plan.mapCandidates.map((candidate) => candidate.placeId);
+
+  assert.equal(routeKeys.includes("yehliu-shifen-jiufen-day"), false);
+  assert.equal(routeKeys.includes("jiufen-old-street"), false);
+  assert.equal(candidateIds.includes("jiufen-old-street"), false);
+  assert.equal(candidateIds.includes("beitou-hot-spring-museum"), true);
+  assert.equal(candidateIds.includes("shilin-night-market"), true);
+  assert.equal(
+    plan.mapCandidates.find(
+      (candidate) => candidate.placeId === "beitou-hot-spring-museum",
+    )?.weatherCondition,
+    "rain",
+  );
 });
