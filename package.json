@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:domain": "tsc -p tsconfig.domain-test.json && node --test .tmp/domain-tests/src/domain/services.test.js"
   },
   "dependencies": {
     "next": "16.2.9",
