@@ -1,8 +1,14 @@
-import { taipeiPlaces } from "./taipei-sample-data";
+import { createMapPins } from "./map-projection";
+import {
+  taipeiBundleCourses,
+  taipeiMapCandidates,
+  taipeiPlaces,
+} from "./taipei-sample-data";
 import { generateLooseRoutePlan } from "./services";
 
 import type { RecommendationExplorerState } from "./recommendation-explorer";
-import type { MapCandidate, Place, RouteDraft } from "./types";
+import type { MapPin } from "./map-projection";
+import type { BundleCourse, MapCandidate, Place, RouteDraft } from "./types";
 
 export interface TripWorkspaceView {
   readonly planDays: readonly {
@@ -11,6 +17,7 @@ export interface TripWorkspaceView {
   }[];
   readonly routeItems: readonly RouteDraft[];
   readonly mapCandidates: readonly MapCandidate[];
+  readonly mapPins: readonly MapPin[];
   readonly saved: {
     readonly mustGo: readonly Place[];
     readonly interested: readonly Place[];
@@ -27,6 +34,32 @@ export function createTripWorkspaceView(
   });
   const placeById = new Map<string, Place>(
     taipeiPlaces.map((place) => [place.placeId, place]),
+  );
+  const courseById = new Map<string, BundleCourse>(
+    taipeiBundleCourses.map((course) => [course.courseId, course]),
+  );
+  const excludedPlaceIds = new Set(
+    state.selections
+      .filter((selection) => selection.selectionType === "excluded")
+      .map((selection) => selection.placeId),
+  );
+  const routedPlaceIds = new Set(
+    plan.routeDraft.flatMap((route) => {
+      if (route.placeId) {
+        return [route.placeId];
+      }
+
+      return route.courseId
+        ? (courseById.get(route.courseId)?.includedPlaceIds ?? [])
+        : [];
+    }),
+  );
+  const supplementalCandidates = taipeiMapCandidates.filter(
+    (candidate) =>
+      (candidate.candidateType === "nearby" ||
+        candidate.candidateType === "rainy_day") &&
+      !excludedPlaceIds.has(candidate.placeId) &&
+      !routedPlaceIds.has(candidate.placeId),
   );
   const selectedPlaces = (selectionType: "must_go" | "interested") =>
     state.selections.flatMap((selection) => {
@@ -48,6 +81,12 @@ export function createTripWorkspaceView(
     ),
     routeItems: plan.routeDraft,
     mapCandidates: plan.mapCandidates,
+    mapPins: createMapPins({
+      routes: plan.routeDraft,
+      candidates: [...plan.mapCandidates, ...supplementalCandidates],
+      places: taipeiPlaces,
+      bundleCourses: taipeiBundleCourses,
+    }),
     saved: {
       mustGo: selectedPlaces("must_go"),
       interested: selectedPlaces("interested"),

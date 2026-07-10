@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 
-import { createTripWorkspaceView, taipeiPlaces } from "@/domain";
+import { createTripWorkspaceView } from "@/domain";
+
+import { MockMapPanel } from "./mock-map-panel";
 
 import type {
-  MapCandidateType,
-  Place,
   RecommendationExplorerState,
   TimeBlock,
 } from "@/domain";
@@ -27,16 +27,6 @@ const timeLabels: Record<TimeBlock, string> = {
   evening: "저녁",
 };
 
-const candidateLabels: Record<MapCandidateType, string> = {
-  interest: "관심 후보",
-  nearby: "근처 후보",
-  rainy_day: "비 오는 날",
-  rest: "쉬어가기",
-  cafe: "카페",
-  food: "먹거리",
-  shopping: "쇼핑",
-};
-
 export function TripWorkspace({
   state,
   onBack,
@@ -46,9 +36,6 @@ export function TripWorkspace({
 }) {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("plan");
   const workspace = createTripWorkspaceView(state);
-  const placeById = new Map<string, Place>(
-    taipeiPlaces.map((place) => [place.placeId, place]),
-  );
 
   return (
     <section aria-label="편집 가능한 여행 작업공간" className="space-y-5">
@@ -148,80 +135,7 @@ export function TripWorkspace({
       ) : null}
 
       {activeTab === "map" ? (
-        <div aria-label="루트와 관심 후보 지도" className="space-y-4">
-          <div className="relative min-h-80 overflow-hidden rounded-[1.75rem] border border-[#cfc5b5] bg-[#e8e1d5] p-5">
-            <div className="absolute inset-0 opacity-45 [background-image:linear-gradient(#c9bca8_1px,transparent_1px),linear-gradient(90deg,#c9bca8_1px,transparent_1px)] [background-size:48px_48px]" />
-            <div className="relative z-10">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#685f52]">
-                Mock map surface
-              </p>
-              <h3 className="mt-2 text-xl font-semibold">중심 루트와 유연한 후보</h3>
-
-              <div className="mt-7 flex flex-wrap gap-3">
-                {workspace.routeItems.map((item, index) => (
-                  <span
-                    key={item.routeId}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#1c1b18] px-3 py-2 text-xs font-semibold text-white shadow-lg"
-                  >
-                    <span className="grid h-5 w-5 place-items-center rounded-full bg-white text-[#1c1b18]">
-                      {index + 1}
-                    </span>
-                    {item.title}
-                  </span>
-                ))}
-                {workspace.mapCandidates.map((candidate) => {
-                  const place = placeById.get(candidate.placeId);
-
-                  return (
-                    <span
-                      key={candidate.candidateId}
-                      className="inline-flex items-center gap-2 rounded-full border border-[#8a4b38] bg-[#fff8f3] px-3 py-2 text-xs font-semibold text-[#8a4b38] shadow"
-                    >
-                      <span className="h-2 w-2 rounded-full bg-[#8a4b38]" />
-                      {place?.name ?? candidate.placeId}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-[#ded8ca] bg-[#fffdf8] p-4">
-              <p className="text-xs font-semibold uppercase text-[#685f52]">Route pins</p>
-              <p className="mt-2 text-2xl font-semibold">{workspace.routeItems.length}</p>
-              <p className="mt-1 text-sm text-[#746a5c]">Keep으로 고른 중심 동선</p>
-            </div>
-            <div className="rounded-2xl border border-[#ded8ca] bg-[#fffdf8] p-4">
-              <p className="text-xs font-semibold uppercase text-[#685f52]">Candidate pins</p>
-              <p className="mt-2 text-2xl font-semibold">{workspace.mapCandidates.length}</p>
-              <p className="mt-1 text-sm text-[#746a5c]">상황에 따라 들를 Maybe 후보</p>
-            </div>
-          </div>
-
-          {workspace.mapCandidates.length > 0 ? (
-            <div className="rounded-2xl border border-[#ded8ca] bg-[#fffdf8] p-4">
-              <h3 className="font-semibold">후보 메모</h3>
-              <div className="mt-3 space-y-2">
-                {workspace.mapCandidates.map((candidate) => {
-                  const place = placeById.get(candidate.placeId);
-
-                  return (
-                    <div
-                      key={candidate.candidateId}
-                      className="flex items-center justify-between gap-3 text-sm"
-                    >
-                      <span>{place?.name ?? candidate.placeId}</span>
-                      <span className="rounded-full bg-[#f3eee5] px-2.5 py-1 text-xs text-[#685f52]">
-                        {candidateLabels[candidate.candidateType]}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
-        </div>
+        <MockMapPanel pins={workspace.mapPins} />
       ) : null}
 
       {activeTab === "saved" ? (

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { positionMapPins } from "../app/mock-map-position";
 import {
   applyPlaceSelection,
   createTripPlanStorage,
@@ -13,16 +14,19 @@ import {
   createRecommendationExplorerState,
   updateRecommendationTripSetup,
 } from "./recommendation-explorer";
+import { createMapPins } from "./map-projection";
 import {
   taipeiBundleCourses,
+  taipeiMapCandidates,
   taipeiPlaces,
+  taipeiRouteDraft,
   taipeiTrip,
   taipeiTripPlanSnapshot,
   taipeiUserSelections,
 } from "./taipei-sample-data";
 import { createTripWorkspaceView } from "./trip-workspace";
 
-import type { Place, Trip, UserPlaceSelection } from "./types";
+import type { MapCandidate, Place, Trip, UserPlaceSelection } from "./types";
 
 class MemoryStorage {
   private readonly values = new Map<string, string>();
@@ -39,6 +43,67 @@ class MemoryStorage {
     this.values.delete(key);
   }
 }
+
+test("map projection preserves coordinates for route and candidate pin kinds", () => {
+  const pins = createMapPins({
+    routes: taipeiRouteDraft.slice(0, 2),
+    candidates: taipeiMapCandidates.slice(0, 3),
+    places: taipeiPlaces,
+    bundleCourses: taipeiBundleCourses,
+  });
+
+  assert.deepEqual(
+    [...new Set(pins.map((pin) => pin.kind))].sort(),
+    ["interest", "nearby", "rainy_day", "route"],
+  );
+  assert.deepEqual(
+    pins.filter((pin) => pin.kind === "route").map((pin) => pin.routeOrder),
+    [1, 2],
+  );
+
+  const placeById = new Map<string, Place>(
+    taipeiPlaces.map((place) => [place.placeId, place]),
+  );
+
+  for (const pin of pins) {
+    assert.deepEqual(pin.coordinates, placeById.get(pin.placeId)?.coordinates);
+  }
+});
+
+test("mock map positioning fans out different pin kinds at the same coordinates", () => {
+  const nearbyCandidate = taipeiMapCandidates.find(
+    (candidate) => candidate.candidateType === "nearby",
+  );
+  assert.ok(nearbyCandidate);
+  const interestCandidate: MapCandidate = {
+    ...nearbyCandidate,
+    candidateId: "candidate-yongkang-interest",
+    candidateType: "interest",
+  };
+  const pins = createMapPins({
+    routes: [],
+    candidates: [interestCandidate, nearbyCandidate],
+    places: taipeiPlaces,
+    bundleCourses: taipeiBundleCourses,
+  });
+
+  assert.deepEqual(
+    pins.map((pin) => pin.coordinates),
+    [nearbyCandidate, nearbyCandidate].map(
+      () =>
+        taipeiPlaces.find(
+          (place) => place.placeId === nearbyCandidate.placeId,
+        )?.coordinates,
+    ),
+  );
+
+  const positionedPins = positionMapPins(pins);
+
+  assert.notDeepEqual(
+    { x: positionedPins[0]?.x, y: positionedPins[0]?.y },
+    { x: positionedPins[1]?.x, y: positionedPins[1]?.y },
+  );
+});
 
 test("recommendation explorer starts with the Taipei 3-night 4-day defaults", () => {
   const state = createRecommendationExplorerState();
@@ -107,6 +172,10 @@ test("trip workspace groups the route, map candidates, and saved selections", ()
     action: "maybe",
   });
   state = applyRecommendationAction(state, {
+    placeId: "ximending",
+    action: "maybe",
+  });
+  state = applyRecommendationAction(state, {
     placeId: "longshan-temple",
     action: "hide",
   });
@@ -132,7 +201,19 @@ test("trip workspace groups the route, map candidates, and saved selections", ()
   );
   assert.deepEqual(
     workspace.saved.interested.map((place) => place.placeId),
-    ["beitou-hot-spring-museum"],
+    ["beitou-hot-spring-museum", "ximending"],
+  );
+  assert.deepEqual(
+    [...new Set(workspace.mapPins.map((pin) => pin.kind))].sort(),
+    ["interest", "nearby", "rainy_day", "route"],
+  );
+  assert.equal(
+    workspace.mapPins.every(
+      (pin) =>
+        Number.isFinite(pin.coordinates.lat) &&
+        Number.isFinite(pin.coordinates.lng),
+    ),
+    true,
   );
 });
 
