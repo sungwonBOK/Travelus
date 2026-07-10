@@ -20,6 +20,7 @@ import {
   taipeiTripPlanSnapshot,
   taipeiUserSelections,
 } from "./taipei-sample-data";
+import { createTripWorkspaceView } from "./trip-workspace";
 
 import type { Place, Trip, UserPlaceSelection } from "./types";
 
@@ -92,6 +93,46 @@ test("recommendation actions classify places and hide excluded cards", () => {
       (place) => place.placeId === "longshan-temple",
     ),
     false,
+  );
+});
+
+test("trip workspace groups the route, map candidates, and saved selections", () => {
+  let state = createRecommendationExplorerState();
+  state = applyRecommendationAction(state, {
+    placeId: "taipei-101-observatory",
+    action: "keep",
+  });
+  state = applyRecommendationAction(state, {
+    placeId: "beitou-hot-spring-museum",
+    action: "maybe",
+  });
+  state = applyRecommendationAction(state, {
+    placeId: "longshan-temple",
+    action: "hide",
+  });
+
+  const workspace = createTripWorkspaceView(state);
+
+  assert.equal(workspace.planDays.length, 4);
+  assert.equal(
+    workspace.routeItems.some(
+      (item) => item.placeId === "taipei-101-observatory",
+    ),
+    true,
+  );
+  assert.equal(
+    workspace.mapCandidates.some(
+      (candidate) => candidate.placeId === "beitou-hot-spring-museum",
+    ),
+    true,
+  );
+  assert.deepEqual(
+    workspace.saved.mustGo.map((place) => place.placeId),
+    ["taipei-101-observatory"],
+  );
+  assert.deepEqual(
+    workspace.saved.interested.map((place) => place.placeId),
+    ["beitou-hot-spring-museum"],
   );
 });
 
