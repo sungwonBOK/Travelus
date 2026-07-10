@@ -11,6 +11,7 @@ import {
 import {
   applyRecommendationAction,
   createRecommendationExplorerState,
+  updateRecommendationTripSetup,
 } from "./recommendation-explorer";
 import {
   taipeiBundleCourses,
@@ -45,6 +46,26 @@ test("recommendation explorer starts with the Taipei 3-night 4-day defaults", ()
   assert.equal(state.trip.durationDays, 4);
   assert.equal(state.trip.companionCount, 2);
   assert.equal(state.recommendations.length, taipeiPlaces.length);
+});
+
+test("trip setup updates duration, companions, styles, and recommendation order", () => {
+  const state = updateRecommendationTripSetup(
+    createRecommendationExplorerState(),
+    {
+      durationDays: 5,
+      companionCount: 3,
+      travelStyles: ["food_focused"],
+    },
+  );
+
+  assert.equal(state.trip.durationDays, 5);
+  assert.equal(state.trip.endDate, "2026-10-14");
+  assert.equal(state.trip.companionCount, 3);
+  assert.deepEqual(state.trip.travelStyles, ["food_focused"]);
+  assert.deepEqual(
+    state.recommendations,
+    getRecommendedPlaces({ trip: state.trip, places: taipeiPlaces }),
+  );
 });
 
 test("recommendation actions classify places and hide excluded cards", () => {

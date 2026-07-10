@@ -5,6 +5,7 @@ import type {
   Place,
   SelectionType,
   Trip,
+  TravelStyle,
   UserPlaceSelection,
 } from "./types";
 
@@ -22,6 +23,12 @@ export interface RecommendationExplorerState {
   readonly recommendations: readonly Place[];
 }
 
+export interface RecommendationTripSetup {
+  readonly durationDays: number;
+  readonly companionCount: number;
+  readonly travelStyles: readonly TravelStyle[];
+}
+
 export function createRecommendationExplorerState(): RecommendationExplorerState {
   return {
     trip: taipeiTrip,
@@ -29,6 +36,32 @@ export function createRecommendationExplorerState(): RecommendationExplorerState
     recommendations: getRecommendedPlaces({
       trip: taipeiTrip,
       places: taipeiPlaces,
+    }),
+  };
+}
+
+export function updateRecommendationTripSetup(
+  state: RecommendationExplorerState,
+  setup: RecommendationTripSetup,
+): RecommendationExplorerState {
+  const endDate = new Date(`${state.trip.startDate}T00:00:00.000Z`);
+  endDate.setUTCDate(endDate.getUTCDate() + setup.durationDays - 1);
+
+  const trip: Trip = {
+    ...state.trip,
+    endDate: endDate.toISOString().slice(0, 10),
+    durationDays: setup.durationDays,
+    companionCount: setup.companionCount,
+    travelStyles: setup.travelStyles,
+  };
+
+  return {
+    ...state,
+    trip,
+    recommendations: getRecommendedPlaces({
+      trip,
+      places: taipeiPlaces,
+      selections: state.selections,
     }),
   };
 }
