@@ -17,6 +17,8 @@ import type {
   TravelStyle,
 } from "@/domain";
 
+import { TripWorkspace } from "./trip-workspace";
+
 const travelStyleOptions: readonly {
   value: TravelStyle;
   label: string;
@@ -84,6 +86,7 @@ const actionLabels: Partial<Record<SelectionType, string>> = {
 export function RecommendationExplorer() {
   const [state, setState] = useState(createRecommendationExplorerState);
   const [started, setStarted] = useState(false);
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
 
   const updateSetup = (setup: Partial<RecommendationTripSetup>) => {
     setState((current) =>
@@ -228,7 +231,12 @@ export function RecommendationExplorer() {
         </section>
 
         <section aria-live="polite" className="min-w-0">
-          {started ? (
+          {started && workspaceOpen ? (
+            <TripWorkspace
+              state={state}
+              onBack={() => setWorkspaceOpen(false)}
+            />
+          ) : started ? (
             <div className="space-y-5">
               <div className="flex flex-col gap-3 border-b border-[#ded8ca] pb-5 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -240,9 +248,17 @@ export function RecommendationExplorer() {
                     Keep은 루트 우선순위로, Maybe는 유연한 후보로 남습니다.
                   </p>
                 </div>
-                <div className="flex gap-2 text-xs font-semibold">
+                <div className="flex flex-wrap gap-2 text-xs font-semibold">
                   <span className="rounded-full bg-[#1c1b18] px-3 py-2 text-white">Keep {keptCount}</span>
                   <span className="rounded-full border border-[#cfc5b5] bg-white px-3 py-2">Maybe {maybeCount}</span>
+                  <button
+                    className="rounded-full bg-[#8a4b38] px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={keptCount + maybeCount === 0}
+                    type="button"
+                    onClick={() => setWorkspaceOpen(true)}
+                  >
+                    작업공간 열기
+                  </button>
                 </div>
               </div>
 
