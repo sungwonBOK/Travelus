@@ -9,6 +9,10 @@ import {
   getRouteEligibleSelections,
 } from "./services";
 import {
+  applyRecommendationAction,
+  createRecommendationExplorerState,
+} from "./recommendation-explorer";
+import {
   taipeiBundleCourses,
   taipeiPlaces,
   taipeiTrip,
@@ -33,6 +37,42 @@ class MemoryStorage {
     this.values.delete(key);
   }
 }
+
+test("recommendation explorer starts with the Taipei 3-night 4-day defaults", () => {
+  const state = createRecommendationExplorerState();
+
+  assert.equal(state.trip.destination.city, "Taipei");
+  assert.equal(state.trip.durationDays, 4);
+  assert.equal(state.trip.companionCount, 2);
+  assert.equal(state.recommendations.length, taipeiPlaces.length);
+});
+
+test("recommendation actions classify places and hide excluded cards", () => {
+  let state = createRecommendationExplorerState();
+
+  state = applyRecommendationAction(state, {
+    placeId: "taipei-101-observatory",
+    action: "keep",
+  });
+  state = applyRecommendationAction(state, {
+    placeId: "beitou-hot-spring-museum",
+    action: "maybe",
+  });
+  state = applyRecommendationAction(state, {
+    placeId: "longshan-temple",
+    action: "hide",
+  });
+
+  assert.equal(state.selections[0]?.selectionType, "must_go");
+  assert.equal(state.selections[1]?.selectionType, "interested");
+  assert.equal(state.selections[2]?.selectionType, "excluded");
+  assert.equal(
+    state.recommendations.some(
+      (place) => place.placeId === "longshan-temple",
+    ),
+    false,
+  );
+});
 
 test("recommendations exclude hidden places and rank food-friendly places for food-focused trips", () => {
   const foodTrip: Trip = {
