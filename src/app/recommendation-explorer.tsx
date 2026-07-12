@@ -1,19 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import {
   applyRecommendationAction,
   createRecommendationExplorerState,
+  createTripPlanSnapshot,
+  createTripPlanStorage,
+  getHiddenRecommendations,
+  restoreRecommendationExplorerState,
   updateRecommendationTripSetup,
 } from "@/domain";
 
 import type {
   DifficultyLevel,
   PlaceCategory,
+  RecommendationExplorerState,
   RecommendationTripSetup,
   SelectionType,
   TimeBlock,
+  TripPlanStorage,
   TravelStyle,
 } from "@/domain";
 
@@ -84,12 +90,62 @@ const actionLabels: Partial<Record<SelectionType, string>> = {
 };
 
 export function RecommendationExplorer() {
-  const [state, setState] = useState(createRecommendationExplorerState);
-  const [started, setStarted] = useState(false);
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getHydratedSnapshot,
+    getServerSnapshot,
+  );
+  const storage = hydrated
+    ? createTripPlanStorage({ storage: window.localStorage })
+    : null;
+  const snapshot = storage?.load() ?? null;
+
+  return (
+    <RecommendationExplorerContent
+      key={hydrated ? "hydrated" : "server"}
+      initialState={
+        snapshot
+          ? restoreRecommendationExplorerState(snapshot)
+          : createRecommendationExplorerState()
+      }
+      initiallyStarted={snapshot !== null}
+      storage={storage}
+    />
+  );
+}
+
+function RecommendationExplorerContent({
+  initialState,
+  initiallyStarted,
+  storage,
+}: {
+  readonly initialState: RecommendationExplorerState;
+  readonly initiallyStarted: boolean;
+  readonly storage: TripPlanStorage | null;
+}) {
+  const [state, setState] = useState(initialState);
+  const [started, setStarted] = useState(initiallyStarted);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
 
+  const updateState = (
+    createNextState: (current: typeof state) => typeof state,
+  ) => {
+    const nextState = createNextState(state);
+
+    setState(nextState);
+    storage?.save(
+      createTripPlanSnapshot(nextState, new Date().toISOString()),
+    );
+  };
+
+  const saveState = () => {
+    storage?.save(
+      createTripPlanSnapshot(state, new Date().toISOString()),
+    );
+  };
+
   const updateSetup = (setup: Partial<RecommendationTripSetup>) => {
-    setState((current) =>
+    updateState((current) =>
       updateRecommendationTripSetup(current, {
         durationDays: setup.durationDays ?? current.trip.durationDays,
         companionCount: setup.companionCount ?? current.trip.companionCount,
@@ -104,6 +160,7 @@ export function RecommendationExplorer() {
   const maybeCount = state.selections.filter(
     (selection) => selection.selectionType === "interested",
   ).length;
+  const hiddenPlaces = getHiddenRecommendations(state);
 
   return (
     <main className="min-h-screen bg-[#f7f5f0] text-[#1c1b18]">
@@ -140,6 +197,7 @@ export function RecommendationExplorer() {
             className="mt-7 space-y-6"
             onSubmit={(event) => {
               event.preventDefault();
+              saveState();
               setStarted(true);
             }}
           >
@@ -326,7 +384,7 @@ export function RecommendationExplorer() {
                                   }`}
                                   type="button"
                                   onClick={() =>
-                                    setState((current) =>
+                                    updateState((current) =>
                                       applyRecommendationAction(current, {
                                         placeId: place.placeId,
                                         action,
@@ -345,6 +403,54 @@ export function RecommendationExplorer() {
                   );
                 })}
               </div>
+
+              {hiddenPlaces.length > 0 ? (
+                <details className="rounded-2xl border border-[#ded8ca] bg-[#fffdf8] p-4 sm:p-5">
+                  <summary className="cursor-pointer text-sm font-semibold text-[#685f52]">
+                    숨긴 장소 {hiddenPlaces.length}
+                  </summary>
+                  <div className="mt-4 space-y-3">
+                    {hiddenPlaces.map((place) => (
+                      <article
+                        key={place.placeId}
+                        className="rounded-xl border border-[#e9e2d6] bg-[#f7f5f0] p-3"
+                      >
+                        <div>
+                          <p className="text-sm font-semibold">{place.name}</p>
+                          <p className="mt-1 text-xs text-[#746a5c]">
+                            {place.area}
+                          </p>
+                        </div>
+                        <div className="mt-3 grid grid-cols-3 gap-2">
+                          {(["restore", "keep", "maybe"] as const).map(
+                            (action) => (
+                              <button
+                                key={action}
+                                className="rounded-lg border border-[#d8cfbf] bg-white px-2 py-2 text-xs font-semibold hover:border-[#9d8f7a]"
+                                type="button"
+                                onClick={() =>
+                                  updateState((current) =>
+                                    applyRecommendationAction(current, {
+                                      placeId: place.placeId,
+                                      action,
+                                    }),
+                                  )
+                                }
+                              >
+                                {action === "restore"
+                                  ? "다시 보기"
+                                  : action === "keep"
+                                    ? "Keep"
+                                    : "Maybe"}
+                              </button>
+                            ),
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </details>
+              ) : null}
             </div>
           ) : (
             <div className="flex min-h-[26rem] items-center justify-center rounded-[1.75rem] border border-dashed border-[#cfc5b5] bg-[#fffdf8]/60 p-8 text-center">
@@ -359,4 +465,16 @@ export function RecommendationExplorer() {
       </div>
     </main>
   );
+}
+
+function subscribeToHydration(): () => void {
+  return () => undefined;
+}
+
+function getHydratedSnapshot(): boolean {
+  return true;
+}
+
+function getServerSnapshot(): boolean {
+  return false;
 }

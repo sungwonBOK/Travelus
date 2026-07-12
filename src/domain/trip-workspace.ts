@@ -31,6 +31,7 @@ export function createTripWorkspaceView(
     trip: state.trip,
     places: taipeiPlaces,
     selections: state.selections,
+    selectedBundleCourseIds: state.selectedBundleCourseIds,
   });
   const placeById = new Map<string, Place>(
     taipeiPlaces.map((place) => [place.placeId, place]),

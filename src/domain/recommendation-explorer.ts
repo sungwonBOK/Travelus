@@ -1,7 +1,12 @@
 import { applyPlaceSelection, getRecommendedPlaces } from "./services";
-import { taipeiPlaces, taipeiTrip } from "./taipei-sample-data";
+import {
+  taipeiAccommodationAreas,
+  taipeiPlaces,
+  taipeiTrip,
+} from "./taipei-sample-data";
 
 import type {
+  AccommodationAreaRecommendation,
   Place,
   SelectionType,
   Trip,
@@ -9,9 +14,12 @@ import type {
   UserPlaceSelection,
 } from "./types";
 
-export type RecommendationAction = "keep" | "maybe" | "hide";
+export type RecommendationAction = "keep" | "maybe" | "hide" | "restore";
 
-const selectionTypeByAction: Record<RecommendationAction, SelectionType> = {
+const selectionTypeByAction: Record<
+  Exclude<RecommendationAction, "restore">,
+  SelectionType
+> = {
   keep: "must_go",
   maybe: "interested",
   hide: "excluded",
@@ -21,6 +29,8 @@ export interface RecommendationExplorerState {
   readonly trip: Trip;
   readonly selections: readonly UserPlaceSelection[];
   readonly recommendations: readonly Place[];
+  readonly selectedBundleCourseIds: readonly string[];
+  readonly accommodationChoice: AccommodationAreaRecommendation;
 }
 
 export interface RecommendationTripSetup {
@@ -37,7 +47,21 @@ export function createRecommendationExplorerState(): RecommendationExplorerState
       trip: taipeiTrip,
       places: taipeiPlaces,
     }),
+    selectedBundleCourseIds: [],
+    accommodationChoice: taipeiAccommodationAreas[0],
   };
+}
+
+export function getHiddenRecommendations(
+  state: RecommendationExplorerState,
+): Place[] {
+  const hiddenPlaceIds = new Set(
+    state.selections
+      .filter((selection) => selection.selectionType === "excluded")
+      .map((selection) => selection.placeId),
+  );
+
+  return taipeiPlaces.filter((place) => hiddenPlaceIds.has(place.placeId));
 }
 
 export function updateRecommendationTripSetup(
@@ -73,6 +97,26 @@ export function applyRecommendationAction(
     readonly action: RecommendationAction;
   },
 ): RecommendationExplorerState {
+  if (action.action === "restore") {
+    const selections = state.selections.filter(
+      (selection) =>
+        !(
+          selection.tripId === state.trip.tripId &&
+          selection.placeId === action.placeId
+        ),
+    );
+
+    return {
+      ...state,
+      selections,
+      recommendations: getRecommendedPlaces({
+        trip: state.trip,
+        places: taipeiPlaces,
+        selections,
+      }),
+    };
+  }
+
   const selections = applyPlaceSelection(state.selections, {
     tripId: state.trip.tripId,
     placeId: action.placeId,

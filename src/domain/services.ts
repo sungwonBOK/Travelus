@@ -306,13 +306,13 @@ export function createTripPlanStorage({
       }
 
       try {
-        const parsedValue = JSON.parse(rawValue) as Partial<TripPlanSnapshot>;
+        const parsedValue: unknown = JSON.parse(rawValue);
 
-        if (parsedValue.schemaVersion !== 1 || !parsedValue.trip) {
+        if (!isTripPlanSnapshot(parsedValue)) {
           return null;
         }
 
-        return parsedValue as TripPlanSnapshot;
+        return parsedValue;
       } catch {
         return null;
       }
@@ -321,6 +321,29 @@ export function createTripPlanStorage({
       storage.setItem(key, JSON.stringify(snapshot));
     },
   };
+}
+
+function isTripPlanSnapshot(value: unknown): value is TripPlanSnapshot {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.snapshotId === "string" &&
+    value.schemaVersion === 1 &&
+    isRecord(value.trip) &&
+    Array.isArray(value.userSelections) &&
+    Array.isArray(value.selectedBundleCourseIds) &&
+    isRecord(value.accommodationChoice) &&
+    Array.isArray(value.routeDraft) &&
+    Array.isArray(value.mapCandidates) &&
+    typeof value.savedAt === "string" &&
+    value.source === "sample"
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 function getRecommendationScore(
