@@ -12,10 +12,12 @@ import {
 import {
   applyRecommendationAction,
   createRecommendationExplorerState,
+  getHiddenRecommendations,
   updateRecommendationTripSetup,
 } from "./recommendation-explorer";
 import { createMapPins } from "./map-projection";
 import {
+  taipeiAccommodationAreas,
   taipeiBundleCourses,
   taipeiMapCandidates,
   taipeiPlaces,
@@ -24,6 +26,10 @@ import {
   taipeiTripPlanSnapshot,
   taipeiUserSelections,
 } from "./taipei-sample-data";
+import {
+  createTripPlanSnapshot,
+  restoreRecommendationExplorerState,
+} from "./trip-plan-snapshot";
 import { createTripWorkspaceView } from "./trip-workspace";
 
 import type { MapCandidate, Place, Trip, UserPlaceSelection } from "./types";
@@ -159,6 +165,71 @@ test("recommendation actions classify places and hide excluded cards", () => {
     ),
     false,
   );
+});
+
+test("hidden recommendations remain recoverable", () => {
+  let state = createRecommendationExplorerState();
+
+  state = applyRecommendationAction(state, {
+    placeId: "longshan-temple",
+    action: "hide",
+  });
+
+  assert.equal(
+    state.recommendations.some(
+      (place) => place.placeId === "longshan-temple",
+    ),
+    false,
+  );
+  assert.deepEqual(
+    getHiddenRecommendations(state).map((place) => place.placeId),
+    ["longshan-temple"],
+  );
+
+  state = applyRecommendationAction(state, {
+    placeId: "longshan-temple",
+    action: "restore",
+  });
+
+  assert.equal(
+    state.selections.some(
+      (selection) => selection.placeId === "longshan-temple",
+    ),
+    false,
+  );
+  assert.equal(
+    state.recommendations.some(
+      (place) => place.placeId === "longshan-temple",
+    ),
+    true,
+  );
+  assert.deepEqual(getHiddenRecommendations(state), []);
+});
+
+test("hidden recommendations can be promoted without duplicate selections", () => {
+  let state = applyRecommendationAction(createRecommendationExplorerState(), {
+    placeId: "longshan-temple",
+    action: "hide",
+  });
+
+  state = applyRecommendationAction(state, {
+    placeId: "longshan-temple",
+    action: "keep",
+  });
+
+  assert.equal(
+    state.selections.filter(
+      (selection) => selection.placeId === "longshan-temple",
+    ).length,
+    1,
+  );
+  assert.equal(
+    state.selections.find(
+      (selection) => selection.placeId === "longshan-temple",
+    )?.selectionType,
+    "must_go",
+  );
+  assert.deepEqual(getHiddenRecommendations(state), []);
 });
 
 test("trip workspace groups the route, map candidates, and saved selections", () => {
@@ -313,6 +384,96 @@ test("trip plan storage saves versioned snapshots behind a replaceable adapter",
   memoryStorage.setItem(
     "travelus:test:snapshot",
     JSON.stringify({ schemaVersion: 99 }),
+  );
+
+  assert.equal(storage.load(), null);
+});
+
+test("trip plan snapshots round-trip the complete editable plan", () => {
+  let state = updateRecommendationTripSetup(
+    createRecommendationExplorerState(),
+    {
+      durationDays: 5,
+      companionCount: 3,
+      travelStyles: ["food_focused"],
+    },
+  );
+  state = applyRecommendationAction(state, {
+    placeId: "taipei-101-observatory",
+    action: "keep",
+  });
+  state = applyRecommendationAction(state, {
+    placeId: "beitou-hot-spring-museum",
+    action: "maybe",
+  });
+  state = applyRecommendationAction(state, {
+    placeId: "longshan-temple",
+    action: "hide",
+  });
+  state = {
+    ...state,
+    selectedBundleCourseIds: ["taipei-night-market-food-route"],
+    accommodationChoice: taipeiAccommodationAreas[1],
+  };
+
+  const snapshot = createTripPlanSnapshot(
+    state,
+    "2026-07-12T05:10:00.000Z",
+  );
+  const memoryStorage = new MemoryStorage();
+  const storage = createTripPlanStorage({
+    key: "travelus:test:complete-snapshot",
+    storage: memoryStorage,
+  });
+  storage.save(snapshot);
+  const loaded = storage.load();
+
+  assert.ok(loaded);
+  assert.equal(loaded.schemaVersion, 1);
+  assert.equal(loaded.savedAt, "2026-07-12T05:10:00.000Z");
+  assert.equal(loaded.trip.durationDays, 5);
+  assert.equal(loaded.trip.companionCount, 3);
+  assert.deepEqual(loaded.trip.travelStyles, ["food_focused"]);
+  assert.deepEqual(loaded.userSelections, state.selections);
+  assert.deepEqual(loaded.selectedBundleCourseIds, [
+    "taipei-night-market-food-route",
+  ]);
+  assert.equal(loaded.accommodationChoice.areaId, "zhongshan");
+  assert.ok(loaded.routeDraft.length > 0);
+  assert.ok(loaded.mapCandidates.length > 0);
+
+  const restored = restoreRecommendationExplorerState(loaded);
+
+  assert.deepEqual(restored.trip, state.trip);
+  assert.deepEqual(restored.selections, state.selections);
+  assert.deepEqual(
+    restored.selectedBundleCourseIds,
+    state.selectedBundleCourseIds,
+  );
+  assert.deepEqual(restored.accommodationChoice, state.accommodationChoice);
+  assert.equal(
+    restored.recommendations.some(
+      (place) => place.placeId === "longshan-temple",
+    ),
+    false,
+  );
+  assert.deepEqual(
+    getHiddenRecommendations(restored).map((place) => place.placeId),
+    ["longshan-temple"],
+  );
+});
+
+test("trip plan storage rejects incomplete versioned snapshots", () => {
+  const memoryStorage = new MemoryStorage();
+  const key = "travelus:test:incomplete-snapshot";
+  const storage = createTripPlanStorage({ key, storage: memoryStorage });
+
+  memoryStorage.setItem(
+    key,
+    JSON.stringify({
+      schemaVersion: 1,
+      trip: taipeiTrip,
+    }),
   );
 
   assert.equal(storage.load(), null);
