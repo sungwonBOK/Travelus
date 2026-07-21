@@ -29,7 +29,7 @@
 - Produces: one `node:test` parent named `Travelus MVP core flow remains intact` with seven numbered subtests.
 - Adds no production export.
 
-- [ ] **Step 1: Record the missing aggregate command as RED evidence**
+- [x] **Step 1: Record the missing aggregate command as RED evidence**
 
 Run:
 
@@ -39,7 +39,7 @@ npm run verify:mvp
 
 Expected: exit non-zero with `Missing script: "verify:mvp"`. This proves the requested automated entry point does not exist before implementation.
 
-- [ ] **Step 2: Write the complete characterization smoke test**
+- [x] **Step 2: Write the complete characterization smoke test**
 
 Create `src/domain/core-flow.test.ts` with:
 
@@ -196,7 +196,7 @@ test("Travelus MVP core flow remains intact", async (t) => {
 });
 ```
 
-- [ ] **Step 3: Compile and run the new characterization test directly**
+- [x] **Step 3: Compile and run the new characterization test directly**
 
 Run:
 
@@ -207,7 +207,7 @@ node --test .tmp/domain-tests/src/domain/core-flow.test.js
 
 Expected: the seven numbered subtests and parent test pass. This is an approved characterization-test exception: existing production behavior is being connected and recorded, so no intentionally false domain assertion is introduced to manufacture a RED failure.
 
-- [ ] **Step 4: Prove the existing canonical runner does not include the scenario**
+- [x] **Step 4: Prove the existing canonical runner does not include the scenario**
 
 Run:
 
@@ -227,7 +227,7 @@ Expected: exit 0 with the existing 16 tests only and no `Travelus MVP core flow 
 - Produces: `verify:mvp` running `test:domain`, `typecheck`, `lint`, and `build` in order.
 - Preserves: all dependency and devDependency entries exactly.
 
-- [ ] **Step 1: Add the minimum npm script wiring**
+- [x] **Step 1: Add the minimum npm script wiring**
 
 Change the `scripts` block in `package.json` to:
 
@@ -243,7 +243,7 @@ Change the `scripts` block in `package.json` to:
 }
 ```
 
-- [ ] **Step 2: Verify GREEN through the canonical domain runner**
+- [x] **Step 2: Verify GREEN through the canonical domain runner**
 
 Run:
 
@@ -253,7 +253,7 @@ npm run test:domain
 
 Expected: exit 0 with all 24 tests passing, including the seven numbered core-flow subtests and their parent.
 
-- [ ] **Step 3: Verify the aggregate command**
+- [x] **Step 3: Verify the aggregate command**
 
 Run:
 
@@ -273,7 +273,7 @@ Expected: exit 0 after `test:domain`, `typecheck`, `lint`, and the Next.js produ
 - Produces: one verified implementation commit on `codex/issue-9-core-flow-verification`.
 - Preserves: issue #10 scope and all package dependency declarations.
 
-- [ ] **Step 1: Run every required command freshly and separately**
+- [x] **Step 1: Run every required command freshly and separately**
 
 Run:
 
@@ -286,7 +286,7 @@ npm run build
 
 Expected: all commands exit 0; domain output reports 24 passing tests with zero failures, and Next.js 16.2.9 completes the production build.
 
-- [ ] **Step 2: Audit requirements and diff scope**
+- [x] **Step 2: Audit requirements and diff scope**
 
 Run:
 
@@ -300,7 +300,7 @@ git diff -- src/domain/core-flow.test.ts
 
 Expected: no whitespace errors, no `package-lock.json` or dependency changes, and only the approved test, npm scripts, spec status, and plan progress appear.
 
-- [ ] **Step 3: Commit the implementation**
+- [x] **Step 3: Commit the implementation**
 
 Run:
 
