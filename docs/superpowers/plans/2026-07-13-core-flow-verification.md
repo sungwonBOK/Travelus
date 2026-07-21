@@ -309,7 +309,7 @@ git add -- docs/superpowers/specs/2026-07-13-core-flow-verification-design.md do
 git commit -m "test: verify Travelus MVP core flow"
 ```
 
-- [ ] **Step 4: Push and open the draft PR authorized by the session goal**
+- [x] **Step 4: Push and open the draft PR authorized by the session goal**
 
 Create `C:\tmp\travelus-issue-9-pr-body.md` with:
 
