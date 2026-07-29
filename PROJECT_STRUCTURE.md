@@ -1,6 +1,6 @@
 # Travelus Project Structure
 
-Status: Proposed foundation for the next refactor
+Status: Approved
 
 ## Purpose
 
@@ -42,8 +42,11 @@ src/
     trip-plan/
       model/                   # snapshot creation, storage, and restoration
 
-  testing/                     # Demo fixture plus cross-feature tests
-    taipei-sample-data.ts
+  demo/                        # Runtime demo seeds used by the MVP
+    taipei/
+      sample-data.ts
+
+  testing/                     # Cross-feature tests and test-only helpers
     taipei-sample-data.test.ts
     domain-integration.test.ts
     core-flow.test.ts
@@ -77,12 +80,16 @@ Feature model code may use entities. The orchestrating `trip-plan` feature may
 coordinate other feature models; individual entities must never depend on a
 feature.
 
+### `demo/`
+
+The Taipei sample dataset is runtime seed data for the current no-API MVP. It
+is shared by several capabilities, so it has an explicit demo boundary instead
+of pretending to belong to one feature or to test-only code.
+
 ### `testing/`
 
-The Taipei sample dataset is a demo fixture used across multiple capabilities,
-so it has an explicit test-support boundary instead of pretending to belong to
-one feature. Cross-feature tests live here. Future narrow unit tests should be
-placed beside the relevant feature model.
+Cross-feature tests live here. Future narrow unit tests should be placed beside
+the relevant feature model.
 
 ## Current-To-Target Mapping
 
@@ -97,7 +104,8 @@ placed beside the relevant feature model.
 | `src/domain/map-projection.ts` | `src/features/map/model/` |
 | snapshot and storage functions | `src/features/trip-plan/model/` |
 | shared trip/place types in `src/domain/types.ts` | `src/entities/trip/model/` and `src/entities/place/model/` |
-| `src/domain/taipei-sample-data.ts` and existing cross-feature tests | `src/testing/` |
+| `src/domain/taipei-sample-data.ts` | `src/demo/taipei/sample-data.ts` |
+| existing cross-feature tests | `src/testing/` |
 
 ## Migration Principles
 
