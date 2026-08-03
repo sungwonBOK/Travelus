@@ -1,18 +1,14 @@
-import { applyPlaceSelection, getRecommendedPlaces } from "./services";
+import { applyPlaceSelection, getRecommendedPlaces } from "./recommendation-service";
 import {
   taipeiAccommodationAreas,
   taipeiPlaces,
   taipeiTrip,
-} from "./taipei-sample-data";
+} from "../../../demo/taipei/sample-data";
 
-import type {
-  AccommodationAreaRecommendation,
-  Place,
-  SelectionType,
-  Trip,
-  TravelStyle,
-  UserPlaceSelection,
-} from "./types";
+import type { Place } from "../../../entities/place/model/types";
+import type { AccommodationAreaRecommendation } from "../../trip-plan/model/types";
+import type { SelectionType, UserPlaceSelection } from "./types";
+import type { Trip, TravelStyle } from "../../../entities/trip/model/types";
 
 export type RecommendationAction = "keep" | "maybe" | "hide" | "restore";
 

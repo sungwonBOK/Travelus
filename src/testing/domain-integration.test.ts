@@ -1,21 +1,21 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { positionMapPins } from "../app/mock-map-position";
+import { positionMapPins } from "../features/map/ui/mock-map-position";
 import {
   applyPlaceSelection,
   createTripPlanStorage,
   generateLooseRoutePlan,
   getRecommendedPlaces,
   getRouteEligibleSelections,
-} from "./services";
+} from "../features/trip-plan/model/plan-service";
 import {
   applyRecommendationAction,
   createRecommendationExplorerState,
   getHiddenRecommendations,
   updateRecommendationTripSetup,
-} from "./recommendation-explorer";
-import { createMapPins } from "./map-projection";
+} from "../features/recommendations/model/recommendation-explorer";
+import { createMapPins } from "../features/map/model/map-projection";
 import {
   taipeiAccommodationAreas,
   taipeiBundleCourses,
@@ -25,14 +25,17 @@ import {
   taipeiTrip,
   taipeiTripPlanSnapshot,
   taipeiUserSelections,
-} from "./taipei-sample-data";
+} from "../demo/taipei/sample-data";
 import {
   createTripPlanSnapshot,
   restoreRecommendationExplorerState,
-} from "./trip-plan-snapshot";
-import { createTripWorkspaceView } from "./trip-workspace";
+} from "../features/trip-plan/model/snapshot";
+import { createTripWorkspaceView } from "../features/itinerary/model/trip-workspace";
 
-import type { MapCandidate, Place, Trip, UserPlaceSelection } from "./types";
+import type { Place } from "@/entities/place/model/types";
+import type { Trip } from "@/entities/trip/model/types";
+import type { MapCandidate } from "@/features/map/model/types";
+import type { UserPlaceSelection } from "@/features/recommendations/model/types";
 
 class MemoryStorage {
   private readonly values = new Map<string, string>();

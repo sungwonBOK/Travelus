@@ -7,18 +7,14 @@ import {
   taipeiTrip,
   taipeiTripPlanSnapshot,
   taipeiUserSelections,
-} from "./taipei-sample-data";
+} from "@/demo/taipei/sample-data";
 
-import type {
-  AccommodationAreaRecommendation,
-  BundleCourse,
-  MapCandidate,
-  Place,
-  RouteDraft,
-  Trip,
-  TripPlanSnapshot,
-  UserPlaceSelection,
-} from "./types";
+import type { Place } from "@/entities/place/model/types";
+import type { Trip } from "@/entities/trip/model/types";
+import type { BundleCourse, RouteDraft } from "@/features/itinerary/model/types";
+import type { MapCandidate } from "@/features/map/model/types";
+import type { UserPlaceSelection } from "@/features/recommendations/model/types";
+import type { AccommodationAreaRecommendation, TripPlanSnapshot } from "@/features/trip-plan/model/types";
 
 type Expect<T extends true> = T;
 

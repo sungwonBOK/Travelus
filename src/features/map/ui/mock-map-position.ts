@@ -1,4 +1,4 @@
-import type { MapPin } from "@/domain";
+import type { MapPin } from "@/features/map/model/map-projection";
 
 export interface PositionedMapPin {
   readonly pin: MapPin;

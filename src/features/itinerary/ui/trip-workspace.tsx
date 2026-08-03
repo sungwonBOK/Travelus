@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 
-import { createTripWorkspaceView } from "@/domain";
+import { createTripWorkspaceView } from "@/features/itinerary/model/trip-workspace";
 
-import { MockMapPanel } from "./mock-map-panel";
+import { MockMapPanel } from "@/features/map/ui/mock-map-panel";
 
-import type {
-  RecommendationExplorerState,
-  TimeBlock,
-} from "@/domain";
+import type { RecommendationExplorerState } from "@/features/recommendations/model/recommendation-explorer";
+import type { TimeBlock } from "@/entities/trip/model/types";
 
 type WorkspaceTab = "plan" | "map" | "saved";
 

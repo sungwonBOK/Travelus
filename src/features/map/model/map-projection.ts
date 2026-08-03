@@ -1,10 +1,6 @@
-import type {
-  BundleCourse,
-  Coordinates,
-  MapCandidate,
-  Place,
-  RouteDraft,
-} from "./types";
+import type { Coordinates, Place } from "../../../entities/place/model/types";
+import type { BundleCourse, RouteDraft } from "../../itinerary/model/types";
+import type { MapCandidate } from "./types";
 
 export type MapPinKind = "route" | "interest" | "nearby" | "rainy_day";
 

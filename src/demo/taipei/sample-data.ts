@@ -1,13 +1,12 @@
+import type { Place } from "@/entities/place/model/types";
+import type { Trip } from "@/entities/trip/model/types";
+import type { BundleCourse, RouteDraft } from "@/features/itinerary/model/types";
+import type { MapCandidate } from "@/features/map/model/types";
+import type { UserPlaceSelection } from "@/features/recommendations/model/types";
 import type {
   AccommodationAreaRecommendation,
-  BundleCourse,
-  MapCandidate,
-  Place,
-  RouteDraft,
-  Trip,
   TripPlanSnapshot,
-  UserPlaceSelection,
-} from "./types";
+} from "@/features/trip-plan/model/types";
 
 export const taipeiTrip = {
   tripId: "trip-taipei-3n4d-demo",
