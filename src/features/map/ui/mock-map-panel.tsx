@@ -1,4 +1,4 @@
-import type { MapPin, MapPinKind } from "@/domain";
+import type { MapPin, MapPinKind } from "@/features/map/model/map-projection";
 
 import { positionMapPins } from "./mock-map-position";
 

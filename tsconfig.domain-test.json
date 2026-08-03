@@ -12,6 +12,6 @@
     "sourceMap": false,
     "types": ["node"]
   },
-  "include": ["src/domain/**/*.ts"],
+  "include": ["src/entities/**/*.ts", "src/features/**/*.ts", "src/demo/**/*.ts", "src/testing/**/*.ts"],
   "exclude": ["node_modules", ".tmp"]
 }

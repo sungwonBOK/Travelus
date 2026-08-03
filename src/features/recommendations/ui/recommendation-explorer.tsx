@@ -5,25 +5,19 @@ import { useState, useSyncExternalStore } from "react";
 import {
   applyRecommendationAction,
   createRecommendationExplorerState,
-  createTripPlanSnapshot,
-  createTripPlanStorage,
   getHiddenRecommendations,
-  restoreRecommendationExplorerState,
   updateRecommendationTripSetup,
-} from "@/domain";
+} from "@/features/recommendations/model/recommendation-explorer";
+import { createTripPlanSnapshot, restoreRecommendationExplorerState } from "@/features/trip-plan/model/snapshot";
+import { createTripPlanStorage } from "@/features/trip-plan/model/storage";
 
-import type {
-  DifficultyLevel,
-  PlaceCategory,
-  RecommendationExplorerState,
-  RecommendationTripSetup,
-  SelectionType,
-  TimeBlock,
-  TripPlanStorage,
-  TravelStyle,
-} from "@/domain";
+import type { DifficultyLevel, PlaceCategory } from "@/entities/place/model/types";
+import type { TimeBlock, TravelStyle } from "@/entities/trip/model/types";
+import type { RecommendationExplorerState, RecommendationTripSetup } from "@/features/recommendations/model/recommendation-explorer";
+import type { SelectionType } from "@/features/recommendations/model/types";
+import type { TripPlanStorage } from "@/features/trip-plan/model/storage";
 
-import { TripWorkspace } from "./trip-workspace";
+import { TripWorkspace } from "@/features/itinerary/ui/trip-workspace";
 
 const travelStyleOptions: readonly {
   value: TravelStyle;

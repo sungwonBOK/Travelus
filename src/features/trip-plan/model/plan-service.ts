@@ -1,21 +1,15 @@
-import { taipeiBundleCourses, taipeiPlaces } from "./taipei-sample-data";
+import { taipeiBundleCourses, taipeiPlaces } from "../../../demo/taipei/sample-data";
 
 import type {
-  BundleCourse,
   DifficultyLevel,
-  MapCandidate,
-  MapCandidateType,
   Place,
   PlaceCategory,
-  RouteDraft,
-  SelectionType,
-  TimeBlock,
-  TravelStyle,
-  Trip,
-  TripPlanSnapshot,
-  UserPlaceSelection,
-  WeatherCondition,
-} from "./types";
+} from "../../../entities/place/model/types";
+import type { BundleCourse, RouteDraft } from "../../itinerary/model/types";
+import type { MapCandidate, MapCandidateType, WeatherCondition } from "../../map/model/types";
+import type { SelectionType, UserPlaceSelection } from "../../recommendations/model/types";
+import type { Trip, TravelStyle, TimeBlock } from "../../../entities/trip/model/types";
+import type { TripPlanSnapshot } from "./types";
 
 export interface RecommendationRequest {
   readonly trip: Trip;

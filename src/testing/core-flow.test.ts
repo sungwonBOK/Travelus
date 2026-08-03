@@ -4,15 +4,15 @@ import test from "node:test";
 import {
   applyRecommendationAction,
   createRecommendationExplorerState,
-} from "./recommendation-explorer";
-import { createTripPlanStorage } from "./services";
+} from "../features/recommendations/model/recommendation-explorer";
+import { createTripPlanStorage } from "../features/trip-plan/model/plan-service";
 import {
   createTripPlanSnapshot,
   restoreRecommendationExplorerState,
-} from "./trip-plan-snapshot";
-import { createTripWorkspaceView } from "./trip-workspace";
+} from "../features/trip-plan/model/snapshot";
+import { createTripWorkspaceView } from "../features/itinerary/model/trip-workspace";
 
-import type { RecommendationExplorerState } from "./recommendation-explorer";
+import type { RecommendationExplorerState } from "../features/recommendations/model/recommendation-explorer";
 
 class MemoryStorage {
   private readonly values = new Map<string, string>();

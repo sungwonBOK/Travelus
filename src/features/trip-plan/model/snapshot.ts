@@ -1,8 +1,8 @@
-import { getRecommendedPlaces } from "./services";
-import { taipeiPlaces } from "./taipei-sample-data";
-import { createTripWorkspaceView } from "./trip-workspace";
+import { getRecommendedPlaces } from "../../recommendations/model/recommendation-service";
+import { taipeiPlaces } from "../../../demo/taipei/sample-data";
+import { createTripWorkspaceView } from "../../itinerary/model/trip-workspace";
 
-import type { RecommendationExplorerState } from "./recommendation-explorer";
+import type { RecommendationExplorerState } from "../../recommendations/model/recommendation-explorer";
 import type { TripPlanSnapshot } from "./types";
 
 export function createTripPlanSnapshot(

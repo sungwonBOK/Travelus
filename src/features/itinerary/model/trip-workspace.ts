@@ -1,14 +1,16 @@
-import { createMapPins } from "./map-projection";
+import { createMapPins } from "../../map/model/map-projection";
 import {
   taipeiBundleCourses,
   taipeiMapCandidates,
   taipeiPlaces,
-} from "./taipei-sample-data";
-import { generateLooseRoutePlan } from "./services";
+} from "../../../demo/taipei/sample-data";
+import { generateLooseRoutePlan } from "./route-generator";
 
-import type { RecommendationExplorerState } from "./recommendation-explorer";
-import type { MapPin } from "./map-projection";
-import type { BundleCourse, MapCandidate, Place, RouteDraft } from "./types";
+import type { RecommendationExplorerState } from "../../recommendations/model/recommendation-explorer";
+import type { MapPin } from "../../map/model/map-projection";
+import type { BundleCourse, RouteDraft } from "./types";
+import type { MapCandidate } from "../../map/model/types";
+import type { Place } from "../../../entities/place/model/types";
 
 export interface TripWorkspaceView {
   readonly planDays: readonly {
