@@ -7,6 +7,14 @@ import type {
   RegionSuggestionWorkspace,
 } from "./types";
 
+function compareRegionIds(left: string, right: string): number {
+  if (left === right) {
+    return 0;
+  }
+
+  return left < right ? -1 : 1;
+}
+
 export interface RegionSuggestionInput {
   readonly candidates: readonly DiscoveryCandidate[];
   readonly regions: readonly TravelRegion[];
@@ -83,7 +91,7 @@ export function createRegionSuggestionWorkspace(
       (left, right) =>
         right.keptCandidates.length - left.keptCandidates.length ||
         right.maybeCandidates.length - left.maybeCandidates.length ||
-        left.region.regionId.localeCompare(right.region.regionId),
+        compareRegionIds(left.region.regionId, right.region.regionId),
     )
     .map((group) => ({
       region: group.region,
