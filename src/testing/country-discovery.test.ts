@@ -58,15 +58,12 @@ test("discovery route returns configured search candidates", async () => {
   assert.deepEqual(await response.json(), { candidates: [candidate] });
 });
 
-test("discovery route rejects an invalid request", async () => {
-  const provider: PlaceSearchProvider = {
-    search: async () => [candidate],
-  };
+test("discovery route rejects an invalid request without live configuration", async () => {
   const response = await handleDiscoveryRequest(
     new NextRequest(
       "http://localhost/api/discovery?countryCode=TW&countryName=Taiwan&query=a",
     ),
-    createDiscoveryRouteDependencies({ apiKey: "test-key", provider }),
+    createDiscoveryRouteDependencies({ apiKey: "" }),
   );
 
   assert.equal(response.status, 400);
@@ -100,6 +97,24 @@ test("discovery route exposes an unavailable provider response", async () => {
 
   assert.equal(response.status, 502);
   assert.deepEqual(await response.json(), { error: "Discovery provider is unavailable" });
+});
+
+test("discovery route preserves unexpected provider errors", async () => {
+  const provider: PlaceSearchProvider = {
+    search: async () => {
+      throw new Error("unexpected provider defect");
+    },
+  };
+
+  await assert.rejects(
+    () => handleDiscoveryRequest(
+      new NextRequest(
+        "http://localhost/api/discovery?countryCode=TW&countryName=Taiwan&query=night%20market",
+      ),
+      createDiscoveryRouteDependencies({ apiKey: "test-key", provider }),
+    ),
+    /unexpected provider defect/,
+  );
 });
 
 test("Google Places maps a geographic attraction into a travel area", async () => {

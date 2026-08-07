@@ -4,6 +4,8 @@ import type {
 } from "./place-search-provider";
 import type { DiscoveryCandidate } from "./types";
 
+export class CountrySearchValidationError extends Error {}
+
 export async function searchCountryCandidates(
   input: CountrySearchInput,
   provider: PlaceSearchProvider,
@@ -15,10 +17,12 @@ export async function searchCountryCandidates(
   };
 
   if (!normalized.countryCode || !normalized.countryName) {
-    throw new Error("Country is required");
+    throw new CountrySearchValidationError("Country is required");
   }
   if (normalized.query.length < 2) {
-    throw new Error("Search query must contain at least two characters");
+    throw new CountrySearchValidationError(
+      "Search query must contain at least two characters",
+    );
   }
 
   return provider.search(normalized);

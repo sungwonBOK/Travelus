@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { searchCountryCandidates } from "../../../features/discovery/model/discovery-service";
+import {
+  CountrySearchValidationError,
+  searchCountryCandidates,
+} from "../../../features/discovery/model/discovery-service";
 import { createGooglePlacesProvider } from "../../../features/discovery/model/google-places-provider";
 import { ProviderUnavailableError } from "../../../features/discovery/model/place-search-provider";
 
@@ -14,6 +17,14 @@ interface DiscoveryRouteDependencyOptions {
   readonly apiKey?: string;
   readonly provider?: PlaceSearchProvider;
 }
+
+class LiveDiscoveryNotConfiguredError extends Error {}
+
+const unconfiguredProvider: PlaceSearchProvider = {
+  search: async () => {
+    throw new LiveDiscoveryNotConfiguredError();
+  },
+};
 
 export function createDiscoveryRouteDependencies(
   options: DiscoveryRouteDependencyOptions = {},
@@ -31,13 +42,6 @@ export async function handleDiscoveryRequest(
   request: NextRequest,
   dependencies: DiscoveryRouteDependencies,
 ): Promise<NextResponse> {
-  if (!dependencies.provider) {
-    return NextResponse.json(
-      { error: "Live discovery is not configured" },
-      { status: 503 },
-    );
-  }
-
   try {
     const candidates = await searchCountryCandidates(
       {
@@ -45,11 +49,25 @@ export async function handleDiscoveryRequest(
         countryName: request.nextUrl.searchParams.get("countryName") ?? "",
         query: request.nextUrl.searchParams.get("query") ?? "",
       },
-      dependencies.provider,
+      dependencies.provider ?? unconfiguredProvider,
     );
 
     return NextResponse.json({ candidates });
   } catch (error) {
+    if (error instanceof CountrySearchValidationError) {
+      return NextResponse.json(
+        { error: "Invalid discovery request" },
+        { status: 400 },
+      );
+    }
+
+    if (error instanceof LiveDiscoveryNotConfiguredError) {
+      return NextResponse.json(
+        { error: "Live discovery is not configured" },
+        { status: 503 },
+      );
+    }
+
     if (error instanceof ProviderUnavailableError) {
       return NextResponse.json(
         { error: "Discovery provider is unavailable" },
@@ -57,10 +75,7 @@ export async function handleDiscoveryRequest(
       );
     }
 
-    return NextResponse.json(
-      { error: "Invalid discovery request" },
-      { status: 400 },
-    );
+    throw error;
   }
 }
 
