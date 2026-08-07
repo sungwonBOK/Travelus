@@ -97,8 +97,14 @@ export function createRegionSuggestionWorkspace(
       region: group.region,
       keptCandidates: group.keptCandidates,
       maybeCandidates: group.maybeCandidates,
-      nearbyCandidates: [],
-      lodgingAreas: [],
+      nearbyCandidates: input.candidates
+        .filter(
+          (candidate) =>
+            assignmentsByCandidateId.get(candidate.candidateId) === group.region.regionId &&
+            !selectionsByCandidateId.has(candidate.candidateId),
+        )
+        .slice(0, 2),
+      lodgingAreas: input.lodgingAreas.filter((area) => area.regionId === group.region.regionId),
     }));
 
   return { groups, unassignedCandidates };

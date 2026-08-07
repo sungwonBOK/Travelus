@@ -44,6 +44,77 @@ test("groups kept and maybe Taiwan candidates by their assigned region", () => {
   );
 });
 
+test("proposes unselected nearby candidates and lodging areas for each selected region", () => {
+  const workspace = createRegionSuggestionWorkspace({
+    candidates: taiwanDiscoveryCandidates,
+    regions: taiwanTravelRegions,
+    assignments: taiwanCandidateAssignments,
+    lodgingAreas: taiwanLodgingAreas,
+    selections: [{ candidateId: "taiwan:shilin-night-market", selectionType: "keep" }],
+  });
+
+  const taipeiGroup = workspace.groups.find((group) => group.region.regionId === "taipei");
+
+  assert.deepEqual(
+    taipeiGroup?.nearbyCandidates.map((candidate) => candidate.candidateId),
+    ["taiwan:taipei-101"],
+  );
+  assert.deepEqual(
+    taipeiGroup?.lodgingAreas.map((area) => area.lodgingAreaId),
+    ["taiwan:xinyi"],
+  );
+});
+
+test("does not propose hidden nearby candidates", () => {
+  const nationalPalaceMuseum = {
+    ...taiwanDiscoveryCandidates[0]!,
+    candidateId: "taiwan:taipei-national-palace-museum",
+  };
+  const workspace = createRegionSuggestionWorkspace({
+    candidates: [...taiwanDiscoveryCandidates, nationalPalaceMuseum],
+    regions: taiwanTravelRegions,
+    assignments: [
+      ...taiwanCandidateAssignments,
+      { candidateId: nationalPalaceMuseum.candidateId, regionId: "taipei" },
+    ],
+    lodgingAreas: taiwanLodgingAreas,
+    selections: [
+      { candidateId: "taiwan:taipei-101", selectionType: "keep" },
+      { candidateId: nationalPalaceMuseum.candidateId, selectionType: "hide" },
+    ],
+  });
+
+  const taipeiGroup = workspace.groups.find((group) => group.region.regionId === "taipei");
+
+  assert.deepEqual(
+    taipeiGroup?.nearbyCandidates.map((candidate) => candidate.candidateId),
+    ["taiwan:shilin-night-market"],
+  );
+});
+
+test("limits nearby candidates to the first two in candidate input order", () => {
+  const region = { ...taiwanTravelRegions[0]!, regionId: "test-region" };
+  const candidates = ["selected", "first", "second", "third"].map((suffix) => ({
+    ...taiwanDiscoveryCandidates[0]!,
+    candidateId: `taiwan:test-${suffix}`,
+  }));
+  const workspace = createRegionSuggestionWorkspace({
+    candidates,
+    regions: [region],
+    assignments: candidates.map((candidate) => ({
+      candidateId: candidate.candidateId,
+      regionId: region.regionId,
+    })),
+    lodgingAreas: [],
+    selections: [{ candidateId: "taiwan:test-selected", selectionType: "keep" }],
+  });
+
+  assert.deepEqual(
+    workspace.groups[0]?.nearbyCandidates.map((candidate) => candidate.candidateId),
+    ["taiwan:test-first", "taiwan:test-second"],
+  );
+});
+
 test("omits hidden candidates and returns selected candidates without a known region", () => {
   const unassignedCandidate = {
     ...taiwanDiscoveryCandidates[0]!,
