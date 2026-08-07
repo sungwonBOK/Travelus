@@ -14,6 +14,10 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000). For a production build,
 run `npm run build` and then `npm start`.
 
+Set `GOOGLE_MAPS_API_KEY` in the server environment to enable global place
+discovery. This key does not enable booking or replace country-specific tourism
+and offer adapters.
+
 ## Verify
 
 ```bash
@@ -42,6 +46,8 @@ The main feature boundaries are:
 - `itinerary`: route generation and the trip workspace.
 - `map`: map-pin projection and the replaceable mock-map UI.
 - `trip-plan`: snapshot creation, localStorage adapter, and restoration.
+- `discovery`: server-only country search normalized behind provider-neutral
+  records and adapters.
 
 The shared Taipei seed is
 `src/demo/taipei/sample-data.ts`. The recommendation, itinerary, map, and
@@ -51,10 +57,16 @@ See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for ownership rules.
 ## MVP scope
 
 The current MVP uses one Taipei demo dataset and browser-local snapshot
-storage. It intentionally does not include an external place API, accounts,
-cloud persistence, authentication, a real map provider, or a native mobile
-client. Those integrations should be added only when they have a concrete
-owner and replacement boundary.
+storage. It does not require an external place API and intentionally does not
+include accounts, cloud persistence, authentication, a real map provider, or a
+native mobile client. Those integrations should be added only when they have a
+concrete owner and replacement boundary.
+
+## Discovery foundation boundary
+
+The country discovery foundation returns discovery candidates only. Region
+grouping, lodging suggestions, user locks, replan previews, official tourism
+adapters, and offer adapters are separate, independent implementation plans.
 
 ## Continuing development
 

@@ -1,13 +1,14 @@
 # Travelus Project Structure
 
-Status: Approved
+Status: Approved and current
 
 ## Purpose
 
-This document records the intended folder boundaries before moving files. It is
-not a change to product behavior: Travelus remains a single Next.js screen that
-lets a traveler set up a Taipei trip, curate places, build a loose itinerary,
-view map candidates, and save or restore a snapshot.
+This document records the current folder boundaries. The existing Next.js
+screen still lets a traveler set up a Taipei trip, curate places, build a loose
+itinerary, view map candidates, and save or restore a snapshot. A separate
+server-only discovery route now exposes normalized country-wide candidates
+without replacing that curated flow.
 
 The goal is to let each product capability grow without turning `src/app` or
 one flat `src/domain` directory into a shared dumping ground.
@@ -17,6 +18,9 @@ one flat `src/domain` directory into a shared dumping ground.
 ```text
 src/
   app/                         # Next.js routes, layout, and global CSS only
+    api/
+      discovery/
+        route.ts               # server-only discovery HTTP boundary
     page.tsx
     layout.tsx
     globals.css
@@ -41,6 +45,8 @@ src/
       ui/                      # map panel and visual positioning
     trip-plan/
       model/                   # snapshot creation, storage, and restoration
+    discovery/
+      model/                   # provider-neutral records, validation, and adapters
 
   demo/                        # Runtime demo seeds used by the MVP
     taipei/
@@ -50,6 +56,7 @@ src/
     taipei-sample-data.test.ts
     domain-integration.test.ts
     core-flow.test.ts
+    country-discovery.test.ts
 ```
 
 ## Ownership Rules
@@ -75,6 +82,8 @@ Each feature owns a recognizable traveler capability:
 - `map`: map candidates, pins, and the current replaceable mock-map UI.
 - `trip-plan`: snapshot persistence and restoration that coordinates the
   recommendation and itinerary models.
+- `discovery`: provider-neutral country search records and validation plus
+  provider adapters. External payload shapes remain inside this feature.
 
 Feature model code may use entities. The orchestrating `trip-plan` feature may
 coordinate other feature models; individual entities must never depend on a
@@ -82,9 +91,10 @@ feature.
 
 ### `demo/`
 
-The Taipei sample dataset is runtime seed data for the current no-API MVP. It
-is shared by several capabilities, so it has an explicit demo boundary instead
-of pretending to belong to one feature or to test-only code.
+The Taipei sample dataset is runtime seed data for the curated MVP flow. It is
+shared by several capabilities, so it has an explicit demo boundary instead of
+pretending to belong to one feature or to test-only code. Live discovery does
+not mutate or replace this seed data.
 
 ### `testing/`
 
@@ -121,8 +131,9 @@ the relevant feature model.
 
 ## Deliberate Non-Goals
 
-- No empty `shared/`, `api/`, `repository/`, or `infrastructure/` folder yet.
-- No database, API, authentication, or native-app migration.
+- No empty `shared/`, `repository/`, or `infrastructure/` folder yet.
+- No database, authentication, or native-app migration.
+- No discovery UI replacement, booking flow, or mutation of the Taipei plan.
 - No new dependency or test framework.
 - No change to the current mock-map replacement boundary.
 

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test:domain": "tsc -p tsconfig.domain-test.json && node --test .tmp/domain-tests/src/testing/domain-integration.test.js .tmp/domain-tests/src/testing/core-flow.test.js",
+    "test:domain": "tsc -p tsconfig.domain-test.json && node --test .tmp/domain-tests/src/testing/domain-integration.test.js .tmp/domain-tests/src/testing/core-flow.test.js .tmp/domain-tests/src/testing/country-discovery.test.js",
     "verify:mvp": "npm run test:domain && npm run typecheck && npm run lint && npm run build"
   },
   "dependencies": {
