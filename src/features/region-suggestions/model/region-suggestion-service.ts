@@ -1,0 +1,111 @@
+import type { DiscoveryCandidate, TravelRegion } from "../../discovery/model/types";
+import type {
+  CandidateRegionAssignment,
+  CountryCandidateSelection,
+  LodgingAreaSuggestion,
+  RegionSuggestionGroup,
+  RegionSuggestionWorkspace,
+} from "./types";
+
+function compareRegionIds(left: string, right: string): number {
+  if (left === right) {
+    return 0;
+  }
+
+  return left < right ? -1 : 1;
+}
+
+export interface RegionSuggestionInput {
+  readonly candidates: readonly DiscoveryCandidate[];
+  readonly regions: readonly TravelRegion[];
+  readonly assignments: readonly CandidateRegionAssignment[];
+  readonly lodgingAreas: readonly LodgingAreaSuggestion[];
+  readonly selections: readonly CountryCandidateSelection[];
+}
+
+export function createRegionSuggestionWorkspace(
+  input: RegionSuggestionInput,
+): RegionSuggestionWorkspace {
+  const candidatesById = new Map(
+    input.candidates.map((candidate) => [candidate.candidateId, candidate]),
+  );
+  const regionsById = new Map(
+    input.regions.map((region) => [region.regionId, region]),
+  );
+  const assignmentsByCandidateId = new Map<string, string>();
+
+  for (const assignment of input.assignments) {
+    if (!assignmentsByCandidateId.has(assignment.candidateId)) {
+      assignmentsByCandidateId.set(assignment.candidateId, assignment.regionId);
+    }
+  }
+
+  const selectionsByCandidateId = new Map<string, CountryCandidateSelection>();
+  for (const selection of input.selections) {
+    if (!selectionsByCandidateId.has(selection.candidateId)) {
+      selectionsByCandidateId.set(selection.candidateId, selection);
+    }
+  }
+
+  const groupsByRegionId = new Map<
+    string,
+    {
+      region: TravelRegion;
+      keptCandidates: DiscoveryCandidate[];
+      maybeCandidates: DiscoveryCandidate[];
+    }
+  >();
+  const unassignedCandidates: DiscoveryCandidate[] = [];
+
+  for (const selection of selectionsByCandidateId.values()) {
+    if (selection.selectionType === "hide") {
+      continue;
+    }
+
+    const candidate = candidatesById.get(selection.candidateId);
+    if (!candidate) {
+      continue;
+    }
+
+    const region = regionsById.get(assignmentsByCandidateId.get(candidate.candidateId) ?? "");
+    if (!region) {
+      unassignedCandidates.push(candidate);
+      continue;
+    }
+
+    let group = groupsByRegionId.get(region.regionId);
+    if (!group) {
+      group = { region, keptCandidates: [], maybeCandidates: [] };
+      groupsByRegionId.set(region.regionId, group);
+    }
+
+    if (selection.selectionType === "keep") {
+      group.keptCandidates.push(candidate);
+    } else {
+      group.maybeCandidates.push(candidate);
+    }
+  }
+
+  const groups: RegionSuggestionGroup[] = [...groupsByRegionId.values()]
+    .sort(
+      (left, right) =>
+        right.keptCandidates.length - left.keptCandidates.length ||
+        right.maybeCandidates.length - left.maybeCandidates.length ||
+        compareRegionIds(left.region.regionId, right.region.regionId),
+    )
+    .map((group) => ({
+      region: group.region,
+      keptCandidates: group.keptCandidates,
+      maybeCandidates: group.maybeCandidates,
+      nearbyCandidates: input.candidates
+        .filter(
+          (candidate) =>
+            assignmentsByCandidateId.get(candidate.candidateId) === group.region.regionId &&
+            !selectionsByCandidateId.has(candidate.candidateId),
+        )
+        .slice(0, 2),
+      lodgingAreas: input.lodgingAreas.filter((area) => area.regionId === group.region.regionId),
+    }));
+
+  return { groups, unassignedCandidates };
+}

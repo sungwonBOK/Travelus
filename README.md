@@ -64,9 +64,11 @@ concrete owner and replacement boundary.
 
 ## Discovery foundation boundary
 
-The country discovery foundation returns discovery candidates only. Region
-grouping, lodging suggestions, user locks, replan previews, official tourism
-adapters, and offer adapters are separate, independent implementation plans.
+Country planning can group selected discoveries by travel region and propose
+nearby results and lodging areas. These are editable suggestions only: they do
+not modify a saved route or accommodation choice. Itinerary generation, user
+locks, and preview-before-apply replanning remain later work; official tourism
+and offer adapters are separate implementation plans.
 
 ## Continuing development
 
