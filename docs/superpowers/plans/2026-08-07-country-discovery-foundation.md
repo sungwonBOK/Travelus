@@ -91,7 +91,7 @@ export type DiscoveryCandidateKind =
 export interface SourceEvidence {
   readonly provider: "google_places" | "official_tourism" | "offer_partner";
   readonly providerRecordId: string;
-  readonly sourceUrl: string;
+  readonly sourceUrl?: string;
   readonly fetchedAt: string;
   readonly fields: readonly string[];
 }
@@ -213,8 +213,9 @@ export class ProviderUnavailableError extends Error {
 
 `createGooglePlacesProvider` must POST to Google Places Text Search with the
 query `${input.query} in ${input.countryName}` and a narrow field mask for
-`id`, `displayName`, `primaryType`, `location`, `googleMapsUri`,
-`rating`, `userRatingCount`, and `regularOpeningHours`. Map
+`id`, `displayName`, `primaryType`, `location`, and `googleMapsUri`. Evidence
+lists only fields actually present on each provider record; an absent optional
+`googleMapsUri` leaves `sourceUrl` absent rather than fabricating one. Map
 `tourist_attraction`, `natural_feature`, `park`, and `neighborhood` to
 `travel_area`; map all other results to `place`. Throw
 `ProviderUnavailableError("google_places")` for a non-OK response or malformed

@@ -46,6 +46,8 @@ The main feature boundaries are:
 - `itinerary`: route generation and the trip workspace.
 - `map`: map-pin projection and the replaceable mock-map UI.
 - `trip-plan`: snapshot creation, localStorage adapter, and restoration.
+- `discovery`: server-only country search normalized behind provider-neutral
+  records and adapters.
 
 The shared Taipei seed is
 `src/demo/taipei/sample-data.ts`. The recommendation, itinerary, map, and

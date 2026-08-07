@@ -22,7 +22,7 @@ export interface TravelRegion {
 export interface SourceEvidence {
   readonly provider: "google_places" | "official_tourism" | "offer_partner";
   readonly providerRecordId: string;
-  readonly sourceUrl: string;
+  readonly sourceUrl?: string;
   readonly fetchedAt: string;
   readonly fields: readonly string[];
 }

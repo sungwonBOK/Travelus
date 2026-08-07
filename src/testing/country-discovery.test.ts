@@ -128,9 +128,6 @@ test("Google Places maps a geographic attraction into a travel area", async () =
           primaryType: "tourist_attraction",
           location: { latitude: 24.154, longitude: 121.49 },
           googleMapsUri: "https://maps.google.com/?cid=taroko",
-          rating: 4.8,
-          userRatingCount: 12345,
-          regularOpeningHours: { weekdayDescriptions: ["Monday: Open 24 hours"] },
         }],
       }), { status: 200 }),
   });
@@ -146,6 +143,51 @@ test("Google Places maps a geographic attraction into a travel area", async () =
   assert.equal(mappedCandidate?.evidence[0]?.provider, "google_places");
 });
 
+test("Google Places requests only fields normalized by the discovery foundation", async () => {
+  let requestedFieldMask: string | null = null;
+  const provider = createGooglePlacesProvider({
+    apiKey: "test-key",
+    fetchImpl: async (_input, init) => {
+      requestedFieldMask = new Headers(init?.headers).get("X-Goog-FieldMask");
+      return new Response(JSON.stringify({ places: [] }), { status: 200 });
+    },
+  });
+
+  await provider.search({
+    countryCode: "TW",
+    countryName: "Taiwan",
+    query: "gorge",
+  });
+
+  assert.equal(
+    requestedFieldMask,
+    "places.id,places.displayName,places.primaryType,places.location,places.googleMapsUri",
+  );
+});
+
+test("Google Places evidence omits optional fields absent from a sparse result", async () => {
+  const provider = createGooglePlacesProvider({
+    apiKey: "test-key",
+    fetchImpl: async () =>
+      new Response(JSON.stringify({
+        places: [{
+          id: "ChIJ-sparse",
+          displayName: { text: "Sparse Place" },
+        }],
+      }), { status: 200 }),
+  });
+
+  const [mappedCandidate] = await provider.search({
+    countryCode: "TW",
+    countryName: "Taiwan",
+    query: "sparse place",
+  });
+
+  assert.equal(mappedCandidate?.coordinates, undefined);
+  assert.equal(mappedCandidate?.evidence[0]?.sourceUrl, undefined);
+  assert.deepEqual(mappedCandidate?.evidence[0]?.fields, ["id", "displayName"]);
+});
+
 test("Google Places exposes an unavailable provider response", async () => {
   const provider = createGooglePlacesProvider({
     apiKey: "test-key",
@@ -155,6 +197,27 @@ test("Google Places exposes an unavailable provider response", async () => {
   await assert.rejects(
     () => provider.search({ countryCode: "TW", countryName: "Taiwan", query: "night market" }),
     ProviderUnavailableError,
+  );
+});
+
+test("Google Places treats a malformed successful payload as unavailable", async () => {
+  const provider = createGooglePlacesProvider({
+    apiKey: "test-key",
+    fetchImpl: async () =>
+      new Response(JSON.stringify({}), { status: 200 }),
+  });
+
+  await assert.rejects(
+    () => provider.search({
+      countryCode: "TW",
+      countryName: "Taiwan",
+      query: "night market",
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof ProviderUnavailableError);
+      assert.equal(error.provider, "google_places");
+      return true;
+    },
   );
 });
 

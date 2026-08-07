@@ -20,9 +20,6 @@ const FIELD_MASK = [
   "places.primaryType",
   "places.location",
   "places.googleMapsUri",
-  "places.rating",
-  "places.userRatingCount",
-  "places.regularOpeningHours",
 ].join(",");
 const TRAVEL_AREA_TYPES = new Set([
   "tourist_attraction",
@@ -36,7 +33,7 @@ interface GooglePlace {
   readonly displayName: { readonly text: string };
   readonly primaryType?: string;
   readonly location?: { readonly latitude: number; readonly longitude: number };
-  readonly googleMapsUri: string;
+  readonly googleMapsUri?: string;
 }
 
 interface GooglePlacesSearchResponse {
@@ -99,9 +96,11 @@ function mapPlace(
   const evidence: SourceEvidence = {
     provider: GOOGLE_PLACES_PROVIDER,
     providerRecordId: place.id,
-    sourceUrl: place.googleMapsUri,
+    ...(place.googleMapsUri === undefined
+      ? {}
+      : { sourceUrl: place.googleMapsUri }),
     fetchedAt: new Date().toISOString(),
-    fields: FIELD_MASK.replaceAll("places.", "").split(","),
+    fields: getReceivedFields(place),
   };
 
   return {
@@ -114,6 +113,16 @@ function mapPlace(
       : undefined,
     evidence: [evidence],
   };
+}
+
+function getReceivedFields(place: GooglePlace): readonly string[] {
+  return [
+    "id",
+    "displayName",
+    ...(place.primaryType === undefined ? [] : ["primaryType"]),
+    ...(place.location === undefined ? [] : ["location"]),
+    ...(place.googleMapsUri === undefined ? [] : ["googleMapsUri"]),
+  ];
 }
 
 function getCandidateKind(primaryType: string | undefined): DiscoveryCandidateKind {
@@ -138,7 +147,7 @@ function isGooglePlace(value: unknown): value is GooglePlace {
     typeof value.id === "string" &&
     isRecord(value.displayName) &&
     typeof value.displayName.text === "string" &&
-    typeof value.googleMapsUri === "string" &&
+    (value.googleMapsUri === undefined || typeof value.googleMapsUri === "string") &&
     (value.primaryType === undefined || typeof value.primaryType === "string") &&
     (value.location === undefined || hasCoordinates(value.location))
   );
