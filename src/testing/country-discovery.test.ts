@@ -4,8 +4,15 @@ import test from "node:test";
 import {
   createGooglePlacesProvider,
 } from "../features/discovery/model/google-places-provider";
-import { ProviderUnavailableError } from "../features/discovery/model/place-search-provider";
+import {
+  ProviderUnavailableError,
+} from "../features/discovery/model/place-search-provider";
+import { searchCountryCandidates } from "../features/discovery/model/discovery-service";
 
+import type {
+  CountrySearchInput,
+  PlaceSearchProvider,
+} from "../features/discovery/model/place-search-provider";
 import type {
   DiscoveryCandidate,
   SourceEvidence,
@@ -70,4 +77,55 @@ test("Google Places exposes an unavailable provider response", async () => {
     () => provider.search({ countryCode: "TW", countryName: "Taiwan", query: "night market" }),
     ProviderUnavailableError,
   );
+});
+
+test("country search trims input before calling its provider", async () => {
+  const calls: CountrySearchInput[] = [];
+  const provider: PlaceSearchProvider = {
+    search: async (input) => {
+      calls.push(input);
+      return [];
+    },
+  };
+
+  await searchCountryCandidates(
+    { countryCode: " TW ", countryName: " Taiwan ", query: " night market " },
+    provider,
+  );
+
+  assert.deepEqual(calls, [{ countryCode: "TW", countryName: "Taiwan", query: "night market" }]);
+});
+
+test("country search rejects blank country data without calling its provider", async () => {
+  let callCount = 0;
+  const provider: PlaceSearchProvider = {
+    search: async () => {
+      callCount += 1;
+      return [];
+    },
+  };
+
+  await assert.rejects(
+    () => searchCountryCandidates({ countryCode: " ", countryName: "Taiwan", query: "night market" }, provider),
+    /Country is required/,
+  );
+
+  assert.equal(callCount, 0);
+});
+
+test("country search rejects a one-character query without calling its provider", async () => {
+  let callCount = 0;
+  const provider: PlaceSearchProvider = {
+    search: async () => {
+      callCount += 1;
+      return [];
+    },
+  };
+
+  await assert.rejects(
+    () => searchCountryCandidates({ countryCode: "TW", countryName: "Taiwan", query: "a" }, provider),
+    /at least two characters/,
+  );
+
+  assert.equal(callCount, 0);
 });
