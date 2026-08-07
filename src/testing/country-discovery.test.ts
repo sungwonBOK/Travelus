@@ -113,6 +113,23 @@ test("country search rejects blank country data without calling its provider", a
   assert.equal(callCount, 0);
 });
 
+test("country search rejects a blank country name without calling its provider", async () => {
+  let callCount = 0;
+  const provider: PlaceSearchProvider = {
+    search: async () => {
+      callCount += 1;
+      return [];
+    },
+  };
+
+  await assert.rejects(
+    () => searchCountryCandidates({ countryCode: "TW", countryName: " ", query: "night market" }, provider),
+    /Country is required/,
+  );
+
+  assert.equal(callCount, 0);
+});
+
 test("country search rejects a one-character query without calling its provider", async () => {
   let callCount = 0;
   const provider: PlaceSearchProvider = {
@@ -124,6 +141,23 @@ test("country search rejects a one-character query without calling its provider"
 
   await assert.rejects(
     () => searchCountryCandidates({ countryCode: "TW", countryName: "Taiwan", query: "a" }, provider),
+    /at least two characters/,
+  );
+
+  assert.equal(callCount, 0);
+});
+
+test("country search rejects a whitespace-padded one-character query without calling its provider", async () => {
+  let callCount = 0;
+  const provider: PlaceSearchProvider = {
+    search: async () => {
+      callCount += 1;
+      return [];
+    },
+  };
+
+  await assert.rejects(
+    () => searchCountryCandidates({ countryCode: "TW", countryName: "Taiwan", query: " a " }, provider),
     /at least two characters/,
   );
 
