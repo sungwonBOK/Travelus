@@ -36,6 +36,7 @@
 **Files:**
 - Create: `src/features/discovery/model/types.ts`
 - Test: `src/testing/country-discovery.test.ts`
+- Modify: `package.json`
 
 **Interfaces:**
 - Produces `Country`, `TravelRegion`, `DiscoveryCandidate`, and `SourceEvidence` for every later task.
@@ -76,7 +77,7 @@ Run: `npm run test:domain`
 
 Expected: TypeScript reports that `../features/discovery/model/types` does not exist.
 
-- [ ] **Step 3: Add the normalized types**
+- [ ] **Step 3: Add the normalized types and register the test file**
 
 ```ts
 import type { Coordinates } from "../../../entities/place/model/types";
@@ -110,6 +111,13 @@ Add `Country` with `countryCode`, `displayName`, and `regionCode`; add
 `TravelRegion` with `regionId`, `countryCode`, `displayName`, and optional
 `anchorCoordinates`. Keep them independent of provider payloads.
 
+Update the existing `test:domain` script at the same time so the new compiled
+test is executed by every later task:
+
+```json
+"test:domain": "tsc -p tsconfig.domain-test.json && node --test .tmp/domain-tests/src/testing/domain-integration.test.js .tmp/domain-tests/src/testing/core-flow.test.js .tmp/domain-tests/src/testing/country-discovery.test.js"
+```
+
 - [ ] **Step 4: Run the domain test to verify it passes**
 
 Run: `npm run test:domain`
@@ -119,7 +127,7 @@ Expected: the existing 24 tests pass and the new type-contract file compiles.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/features/discovery/model/types.ts src/testing/country-discovery.test.ts
+git add package.json src/features/discovery/model/types.ts src/testing/country-discovery.test.ts
 git commit -m "feat: define country discovery records"
 ```
 
@@ -360,45 +368,33 @@ git add src/app/api/discovery/route.ts .env.example README.md src/testing/countr
 git commit -m "feat: expose country discovery route"
 ```
 
-## Task 5: Keep the discovery test runner explicit and document Phase 2
+## Task 5: Document the boundary and Phase 2
 
 **Files:**
-- Modify: `package.json`
 - Modify: `README.md`
 
 **Interfaces:**
-- Adds `.tmp/domain-tests/src/testing/country-discovery.test.js` to the existing
-  `node --test` command without changing the script name.
+- Documents the discovery foundation's current boundary and the next independent
+  implementation plans.
 
-- [ ] **Step 1: Write the failing runner expectation**
-
-Run: `npm run test:domain`
-
-Expected: after Task 1 creates `country-discovery.test.ts`, the test file is
-compiled but not executed because it is absent from `package.json`.
-
-- [ ] **Step 2: Add the compiled test path**
-
-```json
-"test:domain": "tsc -p tsconfig.domain-test.json && node --test .tmp/domain-tests/src/testing/domain-integration.test.js .tmp/domain-tests/src/testing/core-flow.test.js .tmp/domain-tests/src/testing/country-discovery.test.js"
-```
+- [ ] **Step 1: Update the README boundary**
 
 In README, state that this foundation returns discovery candidates only. Region
 grouping, lodging suggestions, user locks, replan previews, official tourism
 adapters, and offer adapters are the next independent implementation plans.
 
-- [ ] **Step 3: Run the full acceptance gate**
+- [ ] **Step 2: Run the full acceptance gate**
 
 Run: `npm run verify:mvp && git diff --check && git status --short`
 
 Expected: all existing tests plus country discovery tests pass; no generated
 `.tmp`, `.next`, or `.superpowers` artifact is staged.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add package.json README.md src/testing/country-discovery.test.ts
-git commit -m "test: run country discovery contracts"
+git add README.md
+git commit -m "docs: define discovery foundation boundary"
 ```
 
 ## Deferred Independent Plans

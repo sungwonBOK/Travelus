@@ -43,5 +43,8 @@ next-env.d.ts
 # local agent artifacts
 .superpowers/
 
+# linked worktrees
+.worktrees/
+
 # generated test output
 .tmp/
