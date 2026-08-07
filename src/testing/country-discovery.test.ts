@@ -1,3 +1,11 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import {
+  createGooglePlacesProvider,
+} from "../features/discovery/model/google-places-provider";
+import { ProviderUnavailableError } from "../features/discovery/model/place-search-provider";
+
 import type {
   DiscoveryCandidate,
   SourceEvidence,
@@ -22,3 +30,44 @@ const candidate: DiscoveryCandidate = {
 };
 
 void candidate;
+
+test("Google Places maps a geographic attraction into a travel area", async () => {
+  const provider = createGooglePlacesProvider({
+    apiKey: "test-key",
+    fetchImpl: async () =>
+      new Response(JSON.stringify({
+        places: [{
+          id: "ChIJ-taroko",
+          displayName: { text: "Taroko Gorge" },
+          primaryType: "tourist_attraction",
+          location: { latitude: 24.154, longitude: 121.49 },
+          googleMapsUri: "https://maps.google.com/?cid=taroko",
+          rating: 4.8,
+          userRatingCount: 12345,
+          regularOpeningHours: { weekdayDescriptions: ["Monday: Open 24 hours"] },
+        }],
+      }), { status: 200 }),
+  });
+
+  const [mappedCandidate] = await provider.search({
+    countryCode: "TW",
+    countryName: "Taiwan",
+    query: "gorge",
+  });
+
+  assert.equal(mappedCandidate?.kind, "travel_area");
+  assert.equal(mappedCandidate?.countryCode, "TW");
+  assert.equal(mappedCandidate?.evidence[0]?.provider, "google_places");
+});
+
+test("Google Places exposes an unavailable provider response", async () => {
+  const provider = createGooglePlacesProvider({
+    apiKey: "test-key",
+    fetchImpl: async () => new Response("upstream failure", { status: 503 }),
+  });
+
+  await assert.rejects(
+    () => provider.search({ countryCode: "TW", countryName: "Taiwan", query: "night market" }),
+    ProviderUnavailableError,
+  );
+});
