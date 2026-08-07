@@ -60,6 +60,12 @@ include accounts, cloud persistence, authentication, a real map provider, or a
 native mobile client. Those integrations should be added only when they have a
 concrete owner and replacement boundary.
 
+## Discovery foundation boundary
+
+The country discovery foundation returns discovery candidates only. Region
+grouping, lodging suggestions, user locks, replan previews, official tourism
+adapters, and offer adapters are separate, independent implementation plans.
+
 ## Continuing development
 
 Keep business behavior in feature models, stable cross-feature concepts in
